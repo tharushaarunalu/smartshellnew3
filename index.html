@@ -56,6 +56,10 @@
         <span id="closeAdminDashboard" class="close">&times;</span>
         <h2 style="font-family: 'Outfit'; margin-top: 0;">Dashboard</h2>
         
+        <div id="rackConfigSummary" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-bottom: 2rem;">
+          <!-- Summary items injected here -->
+        </div>
+        
         <form id="adminForm" class="admin-form">
           <input type="text" id="itemName" placeholder="Item Name" required class="full">
           <select id="itemCategory" required>
@@ -73,14 +77,17 @@
             <option value="Ground Floor">Ground Floor</option>
             <option value="1st Floor">1st Floor</option>
             <option value="2nd Floor">2nd Floor</option>
+            <option value="3rd Floor">3rd Floor</option>
+            <option value="4th Floor">4th Floor</option>
+            <option value="Store">Store</option>
           </select>
           <select id="itemRack" required>
             <option value="">Rack</option>
           </select>
-          <div style="display: flex; align-items: center; gap: 0.5rem; background: #f8fafc; padding: 0.5rem; border-radius: 8px; border: 1px solid #e2e8f0;">
-             <span style="font-size: 0.8rem; color: var(--text-muted);">Racks:</span>
-             <input type="number" id="rackCount" min="1" max="20" value="10" style="width: 50px; border: none; background: transparent; font-weight: 600;">
-             <button type="button" id="updateRacksBtn" style="font-size: 0.75rem; border: none; background: var(--primary); color: #fff; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">Update</button>
+          <div style="display: flex; align-items: center; gap: 0.5rem; background: #fff; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; grid-column: 1 / -1;">
+             <span style="font-size: 0.85rem; color: var(--text); font-weight: 500;">Set Racks for selected Floor:</span>
+             <input type="number" id="rackCount" min="1" max="20" value="10" style="width: 60px; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc; font-weight: 600; text-align: center;">
+             <button type="button" id="updateRacksBtn" class="btn-primary" style="font-size: 0.8rem; padding: 0.4rem 1rem;">Update</button>
           </div>
           <input type="file" id="itemImage" accept="image/*" class="full">
           <input type="number" id="itemQuantity" placeholder="Quantity" min="0" value="0" required class="full" style="margin-bottom: 1rem; padding: 0.8rem; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%;">

@@ -1,7 +1,7 @@
 
 
 // Configuration & Data
-const FLOORS = ['Ground Floor', '1st Floor', '2nd Floor'];
+const FLOORS = ['Ground Floor', '1st Floor', '2nd Floor', '3rd Floor', '4th Floor', 'Store'];
 const CATEGORIES = ['Grocery', 'Dairy', 'Beverages', 'Snacks', 'Personal Care', 'Electronics', 'Other'];
 
 // Initialize default items if not in storage
@@ -52,13 +52,15 @@ const getRacksForFloor = (floor) => {
 function createSVGMap(floor = 'Ground Floor', targetRackId = null) {
   const racks = getRacksForFloor(floor);
   const container = document.getElementById('mapContainer');
+  const rows = Math.ceil(racks.length / 2);
+  const svgHeight = Math.max(300, rows * 60 + 80);
   
-  let svg = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  let svg = `<svg viewBox="0 0 400 ${svgHeight}" xmlns="http://www.w3.org/2000/svg">
     <!-- Floor Outline -->
-    <rect x="5" y="5" width="390" height="290" rx="15" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+    <rect x="5" y="5" width="390" height="${svgHeight - 10}" rx="15" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
     
     <!-- Entrance -->
-    <g transform="translate(200, 290)">
+    <g transform="translate(200, ${svgHeight - 10})">
       <circle cx="0" cy="0" r="10" class="entrance-marker"/>
       <text x="0" y="-15" text-anchor="middle" style="font-size: 10px; font-weight: 700; fill: var(--primary);">ENTRANCE</text>
     </g>`;
@@ -89,7 +91,7 @@ function createSVGMap(floor = 'Ground Floor', targetRackId = null) {
         const targetY = 30 + row * 50 + 35;
         
         // Simple curved path from entrance (200, 290) to rack
-        svg += `<path d="M 200 290 Q 200 ${targetY + 20} ${targetX} ${targetY}" 
+        svg += `<path d="M 200 ${svgHeight - 10} Q 200 ${targetY + 20} ${targetX} ${targetY}" 
                       class="path-line" fill="none" />`;
     }
   }
@@ -187,6 +189,20 @@ function renderAdminTable() {
       <td><button class="delete-btn" onclick="deleteItem(${idx})">×</button></td>
     </tr>
   `).join('');
+  renderRackConfigSummary();
+}
+
+function renderRackConfigSummary() {
+  const summaryDiv = document.getElementById('rackConfigSummary');
+  if (!summaryDiv) return;
+  const cfg = getRackConfig();
+  summaryDiv.innerHTML = FLOORS.map(f => {
+    const count = cfg[f] || 10;
+    return `<div style="background: #f1f5f9; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+      <span>${f}</span>
+      <b style="color: var(--primary)">${count} Racks</b>
+    </div>`;
+  }).join('');
 }
 
 function updateItemQuantity(idx, val) {
@@ -260,6 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (u === ADMIN_USER && p === ADMIN_PASS) {
       closeModal('adminLoginModal');
       document.getElementById('adminDashboardModal').classList.add('show');
+      updateRackOptions(); // Ensure rack options are shown based on the current floor selection
     } else {
       document.getElementById('adminLoginError').textContent = 'Invalid credentials';
     }
@@ -279,6 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cfg[floor] = count;
     saveRackConfig(cfg);
     updateRackOptions();
+    renderRackConfigSummary();
     if (floor === currentFloor) createSVGMap(currentFloor);
   };
 
