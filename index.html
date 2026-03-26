@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Shelf | Item Locator</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Lucide Icons for a premium feel -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Smart Shelf</h1>
+      <p style="color: var(--text-muted); margin-top: 0.5rem; font-weight: 500;">Locate any item in seconds</p>
+    </header>
+
+    <div class="search-container">
+      <input type="text" id="searchBar" placeholder="What are you looking for?" autocomplete="off">
+      <div class="floor-switcher" id="floorSwitcher">
+        <!-- Floor buttons will be injected here -->
+      </div>
+    </div>
+
+    <div id="searchResult"></div>
+
+    <div id="mapWrapper">
+      <div id="mapContainer">
+        <!-- SVG map will be injected here -->
+      </div>
+    </div>
+
+    <!-- Admin Trigger -->
+    <button id="adminLoginBtn" class="admin-trigger" title="Admin Login">
+      <i data-lucide="shield-check"></i>
+    </button>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="modal">
+      <div class="modal-content">
+        <span id="closeAdminLogin" class="close">&times;</span>
+        <h2 style="font-family: 'Outfit'; margin-top: 0;">Admin Access</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Enter credentials to manage items</p>
+        <form id="adminLoginForm">
+          <input type="text" id="adminUsername" placeholder="Username" required style="width:100%; margin-bottom: 1rem; padding: 0.8rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <input type="password" id="adminPassword" placeholder="Password" required style="width:100%; margin-bottom: 1.5rem; padding: 0.8rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <button type="submit" class="btn-primary" style="width:100%;">Sign In</button>
+        </form>
+        <div id="adminLoginError" style="color: var(--danger); margin-top: 1rem; font-size: 0.9rem;"></div>
+      </div>
+    </div>
+
+    <!-- Admin Dashboard Modal -->
+    <div id="adminDashboardModal" class="modal">
+      <div class="modal-content" id="adminPanel" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+        <span id="closeAdminDashboard" class="close">&times;</span>
+        <h2 style="font-family: 'Outfit'; margin-top: 0;">Dashboard</h2>
+        
+        <form id="adminForm" class="admin-form">
+          <input type="text" id="itemName" placeholder="Item Name" required class="full">
+          <select id="itemCategory" required>
+            <option value="">Category</option>
+            <option value="Grocery">Grocery</option>
+            <option value="Dairy">Dairy</option>
+            <option value="Beverages">Beverages</option>
+            <option value="Snacks">Snacks</option>
+            <option value="Personal Care">Personal Care</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Other">Other</option>
+          </select>
+          <select id="itemFloor" required>
+            <option value="">Floor</option>
+            <option value="Ground Floor">Ground Floor</option>
+            <option value="1st Floor">1st Floor</option>
+            <option value="2nd Floor">2nd Floor</option>
+          </select>
+          <select id="itemRack" required>
+            <option value="">Rack</option>
+          </select>
+          <div style="display: flex; align-items: center; gap: 0.5rem; background: #f8fafc; padding: 0.5rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+             <span style="font-size: 0.8rem; color: var(--text-muted);">Racks:</span>
+             <input type="number" id="rackCount" min="1" max="20" value="10" style="width: 50px; border: none; background: transparent; font-weight: 600;">
+             <button type="button" id="updateRacksBtn" style="font-size: 0.75rem; border: none; background: var(--primary); color: #fff; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;">Update</button>
+          </div>
+          <input type="file" id="itemImage" accept="image/*" class="full">
+          <input type="number" id="itemQuantity" placeholder="Quantity" min="0" value="0" required class="full" style="margin-bottom: 1rem; padding: 0.8rem; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%;">
+          <button type="submit" class="btn-primary full">Add New Item</button>
+        </form>
+
+        <div id="adminTableContainer">
+          <table id="adminTable">
+            <thead>
+              <tr>
+                <th>Item</th><th>Loc</th><th>Qty</th><th>Img</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        
+        <button id="adminLogoutBtn" class="btn-primary" style="margin-top: 1.5rem; background: #f1f5f9; color: var(--text); width: 100%;">Logout</button>
+      </div>
+    </div>
+
+    <!-- Item Details Modal -->
+    <div id="itemModal" class="modal">
+      <div class="modal-content item-details">
+        <span id="closeItemModal" class="close">&times;</span>
+        <div id="modalDetails"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
