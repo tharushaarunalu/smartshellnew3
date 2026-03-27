@@ -1,50 +1,55 @@
 
 
+// --- FIREBASE CONFIGURATION ---
+// Replace the config below with your actual Firebase project credentials
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+const storage = firebase.storage();
+
 // Configuration & Data
 const FLOORS = ['Ground Floor', '1st Floor', '2nd Floor', '3rd Floor', '4th Floor', 'Store'];
 const CATEGORIES = ['Grocery', 'Dairy', 'Beverages', 'Snacks', 'Personal Care', 'Electronics', 'Other'];
 
-// Initialize default items if not in storage
-const defaultItems = [
-  { name: 'Milk', category: 'Dairy', floor: 'Ground Floor', rack: 'rack1', quantity: 50 },
-  { name: 'Bread', category: 'Grocery', floor: 'Ground Floor', rack: 'rack2', quantity: 30 },
-  { name: 'Eggs', category: 'Dairy', floor: 'Ground Floor', rack: 'rack3', quantity: 100 },
-  { name: 'Rice', category: 'Grocery', floor: 'Ground Floor', rack: 'rack4', quantity: 200 },
-  { name: 'Sugar', category: 'Grocery', floor: 'Ground Floor', rack: 'rack5', quantity: 150 },
-  { name: 'Battery', category: 'Electronics', floor: '1st Floor', rack: 'rack2', quantity: 45 },
-  { name: 'Soap', category: 'Personal Care', floor: '2nd Floor', rack: 'rack5', quantity: 80 }
-];
-
 // State
 let currentFloor = 'Ground Floor';
 let highlightedRackId = null;
+let allItems = [];
+let rackConfig = {};
 
-// Obfuscated Admin Credentials (Preventing clear-text search)
-const _0x1a = 'dGhhcnVzaGFAMTIz'; // tharusha@123
-const _0x1b = 'MDAxMTIy';         // 001122
-const ADMIN_USER = atob(_0x1a);
-const ADMIN_PASS = atob(_0x1b);
+// Firestore Data Listeners
+function initDataSync() {
+  // Listen for Items
+  db.collection('items').onSnapshot((snapshot) => {
+    allItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderAdminTable();
+    if (highlightedRackId) createSVGMap(currentFloor, highlightedRackId);
+    else createSVGMap(currentFloor);
+  });
 
-// Storage Helpers
-const getRackConfig = () => JSON.parse(localStorage.getItem('rackConfig') || '{}');
-const saveRackConfig = (cfg) => localStorage.setItem('rackConfig', JSON.stringify(cfg));
+  // Listen for Rack Config
+  db.collection('settings').doc('rackConfig').onSnapshot((doc) => {
+    if (doc.exists) {
+      rackConfig = doc.data();
+      renderRackConfigSummary();
+      createSVGMap(currentFloor, highlightedRackId);
+    }
+  });
+}
 
-const getAdminItems = () => {
-  const stored = localStorage.getItem('adminItems');
-  if (!stored) {
-    // First time load: migrate default items to storage
-    localStorage.setItem('adminItems', JSON.stringify(defaultItems));
-    return defaultItems;
-  }
-  return JSON.parse(stored);
-};
-
-const saveAdminItems = (items) => localStorage.setItem('adminItems', JSON.stringify(items));
-const getAllItems = () => getAdminItems();
-
+// Storage Helpers (Updated for Firebase)
 const getRacksForFloor = (floor) => {
-  const cfg = getRackConfig();
-  const count = cfg[floor] || 10;
+  const count = rackConfig[floor] || 10;
   return Array.from({ length: count }, (_, i) => ({ id: `rack${i+1}`, label: `Rack ${i+1}` }));
 };
 
@@ -118,7 +123,7 @@ function switchFloor(floor) {
 
 function handleSearch() {
   const query = document.getElementById('searchBar').value.trim().toLowerCase();
-  const items = getAllItems();
+  const items = allItems;
   const resultDiv = document.getElementById('searchResult');
   
   if (!query) {
@@ -179,14 +184,14 @@ function closeModal(id) {
 // Admin Logic
 function renderAdminTable() {
   const tbody = document.querySelector('#adminTable tbody');
-  const items = getAdminItems();
-  tbody.innerHTML = items.map((item, idx) => `
+  const items = allItems;
+  tbody.innerHTML = items.map((item) => `
     <tr>
       <td><b>${item.name}</b></td>
       <td>${item.floor.replace(' Floor', '')} / R${item.rack.replace('rack','')}</td>
-      <td><input type="number" value="${item.quantity || 0}" min="0" onchange="updateItemQuantity(${idx}, this.value)" style="width: 50px; padding: 4px; border: 1px solid #e2e8f0; border-radius: 4px;"></td>
-      <td>${item.image ? `<img src="${item.image}">` : 'No Image'}</td>
-      <td><button class="delete-btn" onclick="deleteItem(${idx})">×</button></td>
+      <td><input type="number" value="${item.quantity || 0}" min="0" onchange="updateItemQuantity('${item.id}', this.value)" style="width: 50px; padding: 4px; border: 1px solid #e2e8f0; border-radius: 4px;"></td>
+      <td>${item.image ? `<img src="${item.image}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">` : 'No Image'}</td>
+      <td><button class="delete-btn" onclick="deleteItem('${item.id}')">×</button></td>
     </tr>
   `).join('');
   renderRackConfigSummary();
@@ -195,7 +200,7 @@ function renderAdminTable() {
 function renderRackConfigSummary() {
   const summaryDiv = document.getElementById('rackConfigSummary');
   if (!summaryDiv) return;
-  const cfg = getRackConfig();
+  const cfg = rackConfig;
   summaryDiv.innerHTML = FLOORS.map(f => {
     const count = cfg[f] || 10;
     return `<div style="background: #f1f5f9; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
@@ -205,18 +210,13 @@ function renderRackConfigSummary() {
   }).join('');
 }
 
-function updateItemQuantity(idx, val) {
-  const items = getAdminItems();
-  items[idx].quantity = parseInt(val);
-  saveAdminItems(items);
+function updateItemQuantity(id, val) {
+  db.collection('items').doc(id).update({ quantity: parseInt(val) });
 }
 
-function deleteItem(idx) {
-  const items = getAdminItems();
+function deleteItem(id) {
   if (confirm('Delete this item?')) {
-    items.splice(idx, 1);
-    saveAdminItems(items);
-    renderAdminTable();
+    db.collection('items').doc(id).delete();
   }
 }
 
@@ -256,12 +256,13 @@ function initProtection() {
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
   initProtection();
+  initDataSync(); // Start Firebase Sync
+
   // Initialize Lucide Icons
   if (window.lucide) lucide.createIcons();
 
   updateFloorSwitcher();
   createSVGMap(currentFloor);
-  renderAdminTable();
 
   // Search
   document.getElementById('searchBar').addEventListener('input', handleSearch);
@@ -269,39 +270,46 @@ document.addEventListener('DOMContentLoaded', () => {
   // Admin Login
   document.getElementById('adminLoginBtn').onclick = () => document.getElementById('adminLoginModal').classList.add('show');
   document.getElementById('closeAdminLogin').onclick = () => closeModal('adminLoginModal');
-  document.getElementById('adminLoginForm').onsubmit = (e) => {
+  document.getElementById('adminLoginForm').onsubmit = async (e) => {
     e.preventDefault();
     const u = document.getElementById('adminUsername').value;
     const p = document.getElementById('adminPassword').value;
-    if (u === ADMIN_USER && p === ADMIN_PASS) {
+    
+    try {
+      await auth.signInWithEmailAndPassword(u, p);
       closeModal('adminLoginModal');
       document.getElementById('adminDashboardModal').classList.add('show');
-      updateRackOptions(); // Ensure rack options are shown based on the current floor selection
-    } else {
-      document.getElementById('adminLoginError').textContent = 'Invalid credentials';
+      updateRackOptions();
+    } catch (err) {
+      document.getElementById('adminLoginError').textContent = 'Invalid credentials or access denied';
     }
   };
 
   // Admin Dashboard
   document.getElementById('closeAdminDashboard').onclick = () => closeModal('adminDashboardModal');
   document.getElementById('closeItemModal').onclick = () => closeModal('itemModal');
-  document.getElementById('adminLogoutBtn').onclick = () => closeModal('adminDashboardModal');
+  document.getElementById('adminLogoutBtn').onclick = () => {
+    auth.signOut();
+    closeModal('adminDashboardModal');
+  };
 
   document.getElementById('itemFloor').onchange = updateRackOptions;
   document.getElementById('updateRacksBtn').onclick = () => {
     const floor = document.getElementById('itemFloor').value;
     const count = parseInt(document.getElementById('rackCount').value);
     if (!floor || isNaN(count)) return;
-    const cfg = getRackConfig();
-    cfg[floor] = count;
-    saveRackConfig(cfg);
+    
+    rackConfig[floor] = count;
+    db.collection('settings').doc('rackConfig').set(rackConfig);
     updateRackOptions();
-    renderRackConfigSummary();
-    if (floor === currentFloor) createSVGMap(currentFloor);
   };
 
-  document.getElementById('adminForm').onsubmit = (e) => {
+  document.getElementById('adminForm').onsubmit = async (e) => {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+
     const name = document.getElementById('itemName').value.trim();
     const category = document.getElementById('itemCategory').value;
     const floor = document.getElementById('itemFloor').value;
@@ -309,21 +317,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const quantity = parseInt(document.getElementById('itemQuantity').value) || 0;
     const imgFile = document.getElementById('itemImage').files[0];
 
-    const items = getAdminItems();
-    const processItem = (imgData = null) => {
-      items.push({ name, category, floor, rack, quantity, image: imgData });
-      saveAdminItems(items);
-      renderAdminTable();
+    try {
+      let imageUrl = null;
+      if (imgFile) {
+        const storageRef = storage.ref(`items/${Date.now()}_${imgFile.name}`);
+        const snapshot = await storageRef.put(imgFile);
+        imageUrl = await snapshot.ref.getDownloadURL();
+      }
+
+      await db.collection('items').add({
+        name, category, floor, rack, quantity,
+        image: imageUrl,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
       document.getElementById('adminForm').reset();
       updateRackOptions();
-    };
-
-    if (imgFile) {
-        const reader = new FileReader();
-        reader.onload = (evt) => processItem(evt.target.result);
-        reader.readAsDataURL(imgFile);
-    } else {
-        processItem();
+      alert('Item added successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Error adding item: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Add New Item';
     }
   };
 
