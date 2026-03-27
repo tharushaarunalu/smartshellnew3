@@ -1,14 +1,14 @@
 
 
 // --- FIREBASE CONFIGURATION ---
-// Replace the config below with your actual Firebase project credentials
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAfD6HHwbq5UTMg90XxbPh-k-0C4nH4vHo",
+  authDomain: "mapweb-5f4c0.firebaseapp.com",
+  projectId: "mapweb-5f4c0",
+  storageBucket: "mapweb-5f4c0.firebasestorage.app",
+  messagingSenderId: "632009981025",
+  appId: "1:632009981025:web:1257e523014289d45b3e20",
+  measurementId: "G-F2FL8BPMTW"
 };
 
 // Initialize Firebase
@@ -16,6 +16,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 const storage = firebase.storage();
+const analytics = firebase.analytics();
 
 // Configuration & Data
 const FLOORS = ['Ground Floor', '1st Floor', '2nd Floor', '3rd Floor', '4th Floor', 'Store'];
